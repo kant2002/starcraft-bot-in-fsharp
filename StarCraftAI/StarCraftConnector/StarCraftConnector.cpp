@@ -5,6 +5,7 @@
 #include "StarCraftConnector.h"
 #include "BWApiSerializer.h"
 #include "BWTASerializer.h"
+#include <set>
 
 using namespace std;
 using namespace BWAPI;
@@ -73,7 +74,7 @@ void StarCraftConnector::onStart()
 	if (buf[1] == '1') Broodwar->enableFlag(Flag::CompleteMapInformation); 
 
 	//read map information into BWTA so terrain analysis can be done in another thread
-	BWTA::readMap();
+	BWTA::analyze();
 	analyzed=false;
 	analysis_just_finished=false;
 
@@ -83,8 +84,8 @@ void StarCraftConnector::onStart()
 	send(m_proxyBotSocket, piBuf, playerInfo.size(), 0);
 
 	// Unit types
-	set<UnitType> types = UnitTypes::allUnitTypes();
-	for(set<UnitType>::iterator i = types.begin(); i != types.end(); i++)
+	auto types = UnitTypes::allUnitTypes();
+	for(auto& i = types.begin(); i != types.end(); i++)
 	{
 		int id = i->getID();
 		m_typeMap[id] = (*i);
@@ -109,8 +110,8 @@ void StarCraftConnector::onStart()
 	send(m_proxyBotSocket, mdbuf, mapData.size(), 0);
 
 	// Tech types
-	set<TechType> tektypes = TechTypes::allTechTypes();
-	for(set<TechType>::iterator i = tektypes.begin(); i != tektypes.end(); i++)
+	auto tektypes = TechTypes::allTechTypes();
+	for(auto& i = tektypes.begin(); i != tektypes.end(); i++)
 	{
 		int id = i->getID();
 		m_techMap[id] = (*i);
@@ -121,8 +122,8 @@ void StarCraftConnector::onStart()
 	send(m_proxyBotSocket, ttbuf, techTypes.size(), 0);
 
 	// Upgrade types
-	set<UpgradeType> upTypes = UpgradeTypes::allUpgradeTypes();
-	for(set<UpgradeType>::iterator i = upTypes.begin(); i != upTypes.end(); i++)
+	auto upTypes = UpgradeTypes::allUpgradeTypes();
+	for(auto& i = upTypes.begin(); i != upTypes.end(); i++)
 	{
 		int id = i->getID();
 		m_upgradeMap[id] = (*i);
@@ -195,13 +196,13 @@ void StarCraftConnector::onFrame()
 	for (int i=0; i<230; i++) 
 		unitProduction[i] = false;
 
-	std::set<Unit*> selfUnits = Broodwar->self()->getUnits();
-	std::set<UnitType> types = UnitTypes::allUnitTypes();
-	for(std::set<UnitType>::iterator i=types.begin();i!=types.end();i++)
+	auto selfUnits = Broodwar->self()->getUnits();
+	auto types = UnitTypes::allUnitTypes();
+	for(auto& i=types.begin();i!=types.end();i++)
 	{
-		for(std::set<Unit*>::iterator j=selfUnits.begin();j!=selfUnits.end();j++)
+		for(auto& j=selfUnits.begin();j!=selfUnits.end();j++)
 		{
-			if (Broodwar->canMake((*j), (*i))) {
+			if (Broodwar->canMake(*i, *j)) {
 				unitProduction[(*i).getID()] = true;
 				break;
 			}
@@ -212,12 +213,12 @@ void StarCraftConnector::onFrame()
 	for (int i=0; i < 63; i++) 
 		upgradeProduction[i] = false;
 
-	std::set<UpgradeType> upTypes = UpgradeTypes::allUpgradeTypes();
-	for(std::set<UpgradeType>::iterator i=upTypes.begin();i!=upTypes.end();i++)
+	auto upTypes = UpgradeTypes::allUpgradeTypes();
+	for(auto& i=upTypes.begin();i!=upTypes.end();i++)
 	{
-		for(std::set<Unit*>::iterator j=selfUnits.begin();j!=selfUnits.end();j++)
+		for(auto& j=selfUnits.begin();j!=selfUnits.end();j++)
 		{
-			if (Broodwar->canUpgrade((*j), (*i))) {
+			if (Broodwar->canUpgrade(*i, *j)) {
 				upgradeProduction[(*i).getID()] = true;
 				break;
 			}
@@ -228,12 +229,12 @@ void StarCraftConnector::onFrame()
 	for (int i=0; i<47; i++)
 		techProduction[i] = false;
 
-	std::set<TechType> tektypes = TechTypes::allTechTypes();
-	for(std::set<TechType>::iterator i = tektypes.begin();i != tektypes.end(); i++)
+	auto tektypes = TechTypes::allTechTypes();
+	for(auto& i = tektypes.begin();i != tektypes.end(); i++)
 	{
-		for(std::set<Unit*>::iterator j = selfUnits.begin();j != selfUnits.end(); j++)
+		for(auto& j = selfUnits.begin();j != selfUnits.end(); j++)
 		{
-			if (Broodwar->canResearch((*j), (*i))) {
+			if (Broodwar->canResearch(*i, *j)) {
 				techProduction[(*i).getID()] = true;
 				break;
 			}
@@ -260,7 +261,7 @@ void StarCraftConnector::onFrame()
 
 	// send the unit status's to the Proxy Bot
 	std::string status("status");
-	std::set<Unit*> myUnits = Broodwar->getAllUnits();
+	auto myUnits = Broodwar->getAllUnits();
 
 	// also send current resources
 	int minerals = Broodwar->self()->minerals();
@@ -287,7 +288,7 @@ void StarCraftConnector::onFrame()
 	// Now switch to a PIPE delimited list of units...
 	// ... with their stats COMMA delimited
 	status += ";";
-	for(std::set<Unit*>::iterator i = myUnits.begin(); i != myUnits.end(); i++)
+	for(auto& i = myUnits.begin(); i != myUnits.end(); i++)
 	{
 		// get the unit ID
 		int unitID = m_unitMap[*i];
@@ -306,9 +307,9 @@ void StarCraftConnector::onFrame()
 		status += ",";
 		status += toString((*i)->getType().getID());
 		status += ",";
-		status += toString((*i)->getPosition().x()/32);
+		status += toString((*i)->getPosition().x/32);
 		status += ",";
-		status += toString((*i)->getPosition().y()/32);
+		status += toString((*i)->getPosition().y/32);
 		status += ",";
 		status += toString((*i)->getHitPoints()/256);
 		status += ",";
@@ -371,27 +372,27 @@ void StarCraftConnector::onFrame()
 	}
 }
 
-void StarCraftConnector::onUnitCreate(BWAPI::Unit* unit)
+void StarCraftConnector::onUnitCreate(BWAPI::Unit unit)
 {
 }
 
-void StarCraftConnector::onUnitDestroy(BWAPI::Unit* unit)
+void StarCraftConnector::onUnitDestroy(BWAPI::Unit unit)
 {
 }
 
-void StarCraftConnector::onUnitMorph(BWAPI::Unit* unit)
+void StarCraftConnector::onUnitMorph(BWAPI::Unit unit)
 {
 }
 
-void StarCraftConnector::onUnitShow(BWAPI::Unit* unit)
+void StarCraftConnector::onUnitShow(BWAPI::Unit unit)
 {
 }
 
-void StarCraftConnector::onUnitHide(BWAPI::Unit* unit)
+void StarCraftConnector::onUnitHide(BWAPI::Unit unit)
 {
 }
 
-void StarCraftConnector::onUnitRenegade(BWAPI::Unit* unit)
+void StarCraftConnector::onUnitRenegade(BWAPI::Unit unit)
 {
 }
 
@@ -399,11 +400,11 @@ void StarCraftConnector::onSaveGame(std::string gameName)
 {
 }
 
-void StarCraftConnector::onReceiveText(BWAPI::Player* player, std::string text)
+void StarCraftConnector::onReceiveText(BWAPI::Player player, std::string text)
 {
 }
 
-void StarCraftConnector::onPlayerLeft(BWAPI::Player* player)
+void StarCraftConnector::onPlayerLeft(BWAPI::Player player)
 {
 }
 
@@ -411,10 +412,10 @@ void StarCraftConnector::onNukeDetect(BWAPI::Position target)
 {
 }
 
-void StarCraftConnector::onUnitDiscover(BWAPI::Unit* unit)
+void StarCraftConnector::onUnitDiscover(BWAPI::Unit unit)
 {
 }
-void StarCraftConnector::onUnitEvade(BWAPI::Unit* unit)
+void StarCraftConnector::onUnitEvade(BWAPI::Unit unit)
 {
 }
 
@@ -488,7 +489,7 @@ void StarCraftConnector::HandleCommand(int command, int unitID, int arg0, int ar
 {
 
 	// check that the unit ID is valid
-	Unit* unit = m_unitIDMap[unitID];
+	Unit unit = m_unitIDMap[unitID];
 	if (unit == NULL) 
 	{
 		Broodwar->sendText("Issued command to invalid unit ID: %d", unitID);
@@ -544,7 +545,7 @@ void StarCraftConnector::HandleCommand(int command, int unitID, int arg0, int ar
 			}
 			else {
 				if (m_logCmds) Broodwar->sendText("Unit:%d build(%d, %d, %d)", unitID, arg0, arg1, arg2);
-				unit->build(getTilePosition(arg0, arg1), getUnitType(arg2));
+				unit->build(getUnitType(arg2), getTilePosition(arg0, arg1));
 			}
 			break;
 		// virtual bool buildAddon(UnitType type) = 0;
@@ -785,7 +786,7 @@ void StarCraftConnector::HandleCommand(int command, int unitID, int arg0, int ar
 /**
  * Returns the unit based on the unit ID
  */
-Unit* StarCraftConnector::getUnit(int unitID)
+Unit StarCraftConnector::getUnit(int unitID)
 {
 	return m_unitIDMap[unitID];
 }
@@ -861,10 +862,10 @@ DWORD WINAPI AnalyzeThread()
 
 void StarCraftConnector::drawStats()
 {
-  std::set<Unit*> myUnits = Broodwar->self()->getUnits();
+  auto myUnits = Broodwar->self()->getUnits();
   Broodwar->drawTextScreen(5,0,"I have %d units:",myUnits.size());
   std::map<UnitType, int> unitTypeCounts;
-  for(std::set<Unit*>::iterator i=myUnits.begin();i!=myUnits.end();i++)
+  for(auto& i=myUnits.begin();i!=myUnits.end();i++)
   {
     if (unitTypeCounts.find((*i)->getType())==unitTypeCounts.end())
     {
@@ -882,21 +883,21 @@ void StarCraftConnector::drawStats()
 
 void StarCraftConnector::drawBullets()
 {
-  std::set<Bullet*> bullets = Broodwar->getBullets();
-  for(std::set<Bullet*>::iterator i=bullets.begin();i!=bullets.end();i++)
+	auto bullets = Broodwar->getBullets();
+  for(auto& i=bullets.begin();i!=bullets.end();i++)
   {
     Position p=(*i)->getPosition();
     double velocityX = (*i)->getVelocityX();
     double velocityY = (*i)->getVelocityY();
     if ((*i)->getPlayer()==Broodwar->self())
     {
-      Broodwar->drawLineMap(p.x(),p.y(),p.x()+(int)velocityX,p.y()+(int)velocityY,Colors::Green);
-      Broodwar->drawTextMap(p.x(),p.y(),"\x07%s",(*i)->getType().getName().c_str());
+      Broodwar->drawLineMap(p.x,p.y,p.x+(int)velocityX,p.y+(int)velocityY,Colors::Green);
+      Broodwar->drawTextMap(p.x,p.y,"\x07%s",(*i)->getType().getName().c_str());
     }
     else
     {
-      Broodwar->drawLineMap(p.x(),p.y(),p.x()+(int)velocityX,p.y()+(int)velocityY,Colors::Red);
-      Broodwar->drawTextMap(p.x(),p.y(),"\x06%s",(*i)->getType().getName().c_str());
+      Broodwar->drawLineMap(p.x,p.y,p.x+(int)velocityX,p.y+(int)velocityY,Colors::Red);
+      Broodwar->drawTextMap(p.x,p.y,"\x06%s",(*i)->getType().getName().c_str());
     }
   }
 }
@@ -923,61 +924,61 @@ void StarCraftConnector::drawVisibilityData()
 void StarCraftConnector::drawTerrainData()
 {
   //we will iterate through all the base locations, and draw their outlines.
-  for(std::set<BWTA::BaseLocation*>::const_iterator i=BWTA::getBaseLocations().begin();i!=BWTA::getBaseLocations().end();i++)
+  for(auto& i=BWTA::getBaseLocations().begin();i!=BWTA::getBaseLocations().end();i++)
   {
     TilePosition p=(*i)->getTilePosition();
     Position c=(*i)->getPosition();
 
     //draw outline of center location
-    Broodwar->drawBox(CoordinateType::Map,p.x()*32,p.y()*32,p.x()*32+4*32,p.y()*32+3*32,Colors::Blue,false);
+    Broodwar->drawBox(CoordinateType::Map,p.x*32,p.y*32,p.x*32+4*32,p.y*32+3*32,Colors::Blue,false);
 
     //draw a circle at each mineral patch
-    for(std::set<BWAPI::Unit*>::const_iterator j=(*i)->getStaticMinerals().begin();j!=(*i)->getStaticMinerals().end();j++)
+    for(auto& j=(*i)->getStaticMinerals().begin();j!=(*i)->getStaticMinerals().end();j++)
     {
       Position q=(*j)->getInitialPosition();
-      Broodwar->drawCircle(CoordinateType::Map,q.x(),q.y(),30,Colors::Cyan,false);
+      Broodwar->drawCircle(CoordinateType::Map,q.x,q.y,30,Colors::Cyan,false);
     }
 
     //draw the outlines of vespene geysers
-    for(std::set<BWAPI::Unit*>::const_iterator j=(*i)->getGeysers().begin();j!=(*i)->getGeysers().end();j++)
+    for(auto& j=(*i)->getGeysers().begin();j!=(*i)->getGeysers().end();j++)
     {
       TilePosition q=(*j)->getInitialTilePosition();
-      Broodwar->drawBox(CoordinateType::Map,q.x()*32,q.y()*32,q.x()*32+4*32,q.y()*32+2*32,Colors::Orange,false);
+      Broodwar->drawBox(CoordinateType::Map,q.x*32,q.y*32,q.x*32+4*32,q.y*32+2*32,Colors::Orange,false);
     }
 
     //if this is an island expansion, draw a yellow circle around the base location
     if ((*i)->isIsland())
-      Broodwar->drawCircle(CoordinateType::Map,c.x(),c.y(),80,Colors::Yellow,false);
+      Broodwar->drawCircle(CoordinateType::Map,c.x,c.y,80,Colors::Yellow,false);
   }
 
   //we will iterate through all the regions and draw the polygon outline of it in green.
-  for(std::set<BWTA::Region*>::const_iterator r=BWTA::getRegions().begin();r!=BWTA::getRegions().end();r++)
+  for(auto& r=BWTA::getRegions().begin();r!=BWTA::getRegions().end();r++)
   {
-    BWTA::Polygon p=(*r)->getPolygon();
+    const auto& p=(*r)->getPolygon();
     for(int j=0;j<(int)p.size();j++)
     {
       Position point1=p[j];
       Position point2=p[(j+1) % p.size()];
-      Broodwar->drawLine(CoordinateType::Map,point1.x(),point1.y(),point2.x(),point2.y(),Colors::Green);
+      Broodwar->drawLine(CoordinateType::Map,point1.x,point1.y,point2.x,point2.y,Colors::Green);
     }
   }
 
   //we will visualize the chokepoints with red lines
-  for(std::set<BWTA::Region*>::const_iterator r=BWTA::getRegions().begin();r!=BWTA::getRegions().end();r++)
+  for(auto& r=BWTA::getRegions().begin();r!=BWTA::getRegions().end();r++)
   {
-    for(std::set<BWTA::Chokepoint*>::const_iterator c=(*r)->getChokepoints().begin();c!=(*r)->getChokepoints().end();c++)
+    for(auto & c=(*r)->getChokepoints().begin();c!=(*r)->getChokepoints().end();c++)
     {
       Position point1=(*c)->getSides().first;
       Position point2=(*c)->getSides().second;
-      Broodwar->drawLine(CoordinateType::Map,point1.x(),point1.y(),point2.x(),point2.y(),Colors::Red);
+      Broodwar->drawLine(CoordinateType::Map,point1.x,point1.y,point2.x,point2.y,Colors::Red);
     }
   }
 }
 
 void StarCraftConnector::showPlayers()
 {
-  std::set<Player*> players=Broodwar->getPlayers();
-  for(std::set<Player*>::iterator i=players.begin();i!=players.end();i++)
+	auto players=Broodwar->getPlayers();
+  for(auto& i=players.begin();i!=players.end();i++)
   {
     Broodwar->printf("Player [%d]: %s is in force: %s",(*i)->getID(),(*i)->getName().c_str(), (*i)->getForce()->getName().c_str());
   }
@@ -985,12 +986,12 @@ void StarCraftConnector::showPlayers()
 
 void StarCraftConnector::showForces()
 {
-  std::set<Force*> forces=Broodwar->getForces();
-  for(std::set<Force*>::iterator i=forces.begin();i!=forces.end();i++)
+  auto forces=Broodwar->getForces();
+  for(auto& i=forces.begin();i!=forces.end();i++)
   {
-    std::set<Player*> players=(*i)->getPlayers();
+    auto players=(*i)->getPlayers();
     Broodwar->printf("Force %s has the following players:",(*i)->getName().c_str());
-    for(std::set<Player*>::iterator j=players.begin();j!=players.end();j++)
+    for(auto& j=players.begin();j!=players.end();j++)
     {
       Broodwar->printf("  - Player [%d]: %s",(*j)->getID(),(*j)->getName().c_str());
     }

@@ -4,7 +4,7 @@ open StarCraftBot9K.StarCraft.Constants
 open StarCraftBot9K.StarCraft.BasicOM
 open StarCraftBot9K.StarCraft.Communication
 open StarCraftBot9K.AI.AIBase
-open StarCraftBot9K.AI.AIStructs
+// open StarCraftBot9K.AI.AIStructs
 
 /// AI module for managaing your economy. Building drones, vespen geysers, etc.
 let private getEconomyAI (mediator : GameMediator) =

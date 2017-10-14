@@ -1,5 +1,4 @@
 #pragma once
-
 #include <BWAPI.h>
 
 using namespace std;

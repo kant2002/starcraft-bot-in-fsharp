@@ -5,6 +5,7 @@
 // with any STL string builder type.
 // mb stl:rope http://stackoverflow.com/questions/6834343/ultra-quick-way-to-concatenate-byte-values
 
+#include <set>
 #include <sstream>
 
 string toString(int value);

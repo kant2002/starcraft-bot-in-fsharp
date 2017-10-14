@@ -6,6 +6,7 @@
 // mb stl:rope http://stackoverflow.com/questions/6834343/ultra-quick-way-to-concatenate-byte-values
 
 #include <sstream>
+#include <set>
 
 string toString(int value);
 string toString(bool value);
@@ -28,8 +29,8 @@ string BWApiSerializer::GetUnitTypes()
 {
 	string unitTypes(";UnitTypes;");
 
-	set<UnitType> types = UnitTypes::allUnitTypes();
-	for(set<UnitType>::iterator i = types.begin(); i != types.end(); i++)
+	UnitType::set types = UnitTypes::allUnitTypes();
+	for(UnitType::set::iterator i = types.begin(); i != types.end(); i++)
 	{
 		int id = i->getID();
 		string race = i->getRace().getName();
@@ -125,11 +126,11 @@ string BWApiSerializer::GetStartingLocations()
 {
 	string locations(";StartLocations;");
 
-	set<TilePosition> startSpots = Broodwar->getStartLocations();
-	for(set<TilePosition>::iterator i = startSpots.begin(); i != startSpots.end(); i++)
+	TilePosition::list startSpots = Broodwar->getStartLocations();
+	for(TilePosition::list::iterator i = startSpots.begin(); i != startSpots.end(); i++)
 	{
-		int x = i->x();
-		int y = i->y();
+		int x = i->x;
+		int y = i->y;
 
 		locations += toString(x);
 		locations += ",";
@@ -198,8 +199,8 @@ string BWApiSerializer::GetTechTypes()
 {
 	string techTypes(";TechTypes;");
 
-	set<TechType> tektypes = TechTypes::allTechTypes();
-	for(set<TechType>::iterator i = tektypes.begin(); i != tektypes.end(); i++)
+	auto tektypes = TechTypes::allTechTypes();
+	for(auto& i = tektypes.begin(); i != tektypes.end(); i++)
 	{
 		int id = i->getID();
 		string name = i->getName();
@@ -228,8 +229,8 @@ string BWApiSerializer::GetUpgradeTypes()
 {
 	string upgradeTypes(";UpgradeTypes;");
 
-	set<UpgradeType> upTypes = UpgradeTypes::allUpgradeTypes();
-	for(set<UpgradeType>::iterator i = upTypes.begin(); i != upTypes.end(); i++)
+	auto upTypes = UpgradeTypes::allUpgradeTypes();
+	for(auto& i = upTypes.begin(); i != upTypes.end(); i++)
 	{
 		int id = i->getID();
 		string name = i->getName();
