@@ -1,22 +1,29 @@
 -------------------------------------------
-| starcraft-bot-in-fsharp on BWAPI 3.7.4  |
+| starcraft-bot-in-fsharp on BWAPI 4.2.0  |
 |    based on Chris Smith's sources       |
 -------------------------------------------
 
 THE PRELUDE		http://blogs.msdn.com/b/chrsmith/archive/2010/03/18/writing-a-starcraft-bot-in-f.aspx
 
-The BWAPI web site	http://code.google.com/p/bwapi/
+The BWAPI web site	https://github.com/bwapi/bwapi/
 
 ------------------------
 
+Requirements
+- VS 2017 Community edition at least with C++ workload, F#, .NET
+
 Instruction:
 
-1. Download 3.7.4 version of BWAPI https://code.google.com/p/bwapi/
+1. Download 4.2.0 version of BWAPI https://github.com/bwapi/bwapi/releases
  a. Copy the contents of Chaoslauncher/ (resides in downloaded bwapi) to your Chaos Launcher folder.
  b. Copy the contents of Starcraft/ (resides in downloaded bwapi) to your actual Starcraft folder.
  c. Copy the contents of WINDOWS/ (resides in downloaded bwapi) to your C:\WINDOWS or C:\WINNT folder or...  You can actually copy these Dlls to anywhere on your system PATH.  
 
-2. How to start your bot:
+2. How to build
+	a. Set BWAPI_DIR environment variable to point to root of BWAPI installation.
+	b. Set BWTA_DIR environment variable to point to root of BWTA source code.
+
+3. How to start your bot:
  a. Launch the project (for example by running it in debug mode)
  b. Enter the solution directory StarCraftConnector\bin\Release and copy StarcraftConnector.dll to the game folder: Starcraft\bwapi-data\AI. Move back to Starcraft\bwapi-data and open bwapi.ini file. Change the name of AI there ai = bwapi-data\AI\ExampleAIModule.dll to yours (probably StarcraftConnector.dll)
  d. Launch the game! (And create your custom battle)
