@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Windows.Forms;
 
@@ -20,7 +21,21 @@ namespace StarCraftBot9KClient.Forms
         {
             InitializeComponent();
 
-            Connection = new Communication.StarCraftConnector();
+            Connection = new Communication.StarCraftConnector(GetAddress());
+        }
+
+        public IPAddress GetAddress()
+        {
+            var hostName = System.Net.Dns.GetHostName();
+            var ipv4 = System.Net.Dns.GetHostAddresses(hostName)
+                .Where(_ => _.ToString().StartsWith("192"))
+                .FirstOrDefault(_ => _.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+            if (ipv4 == null)
+            {
+                throw new InvalidOperationException("Unable to get IPV4 IP address");
+            }
+
+            return ipv4;
         }
 
         private void ConnectToStarCraft_Load(object sender, EventArgs e)

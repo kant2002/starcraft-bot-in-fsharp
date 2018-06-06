@@ -20,6 +20,7 @@ type System.Collections.Generic.Queue<'a> with
 
 open StarCraftBot9K.AI.AIBase
 open StarCraftBot9K.StarCraft.BasicOM
+open System.Runtime.InteropServices
 
 [<AllowNullLiteralAttribute>]
 type ISocketCommunicator =
@@ -41,8 +42,11 @@ let getCommunicator (socket : Socket) =
     { 
         new ISocketCommunicator with
             member this.ReadLine() =
-                let bytesRead = socket.Receive(buffer)
-                translateData bytesRead
+                //try
+                    let bytesRead = socket.Receive(buffer)
+                    translateData bytesRead
+                //with 
+                    //| :? System.Exception as _ex -> ""
             member this.WriteLine msg =
                 let msg' = encodeData msg
                 socket.Send(msg') |> ignore
@@ -62,23 +66,12 @@ type PlayerStateRecievedDelegate = delegate of sender:obj * state:PlayerState ->
 
 /// The communication layer between ProxyBot and StarCraft. Opens up
 /// a port for communication.
-type StarCraftConnector(port) =
-
-    // Socket communication
-    let getHostIP() =
-        let hostName = System.Net.Dns.GetHostName()
-        // Get the IPV4 address...
-        let ipv4 = 
-            System.Net.Dns.GetHostAddresses(hostName)
-            |> Array.tryFind (fun ip -> ip.AddressFamily = AddressFamily.InterNetwork)
-        match ipv4 with
-        | Some(ip) -> ip
-        | None     -> failwith "Unable to get IPV4 IP address"
+type StarCraftConnector(address, port) =
 
     let mutable m_flagAllowUserInput = false
     let mutable m_flagGivePerfectInformation = false
 
-    let m_tcpServer = new TcpListener(getHostIP(), port)
+    let m_tcpServer = new TcpListener(address, port)
     
     let mutable m_socket     : Socket = null
     let mutable m_socketComm : ISocketCommunicator = null
@@ -101,7 +94,7 @@ type StarCraftConnector(port) =
     // ------------------------------------------------------------------------
 
     /// Connect to an instance of StarCraft using the default port
-    new() = new StarCraftConnector(DefaultPortNumber)
+    new(address) = new StarCraftConnector(address, DefaultPortNumber)
 
     member this.FlagAllowUserInput 
         with get () = m_flagAllowUserInput
@@ -182,6 +175,7 @@ type StarCraftConnector(port) =
             // Read the welcome message
             // Should look a lot like:
             // "ProxyBotACK;playerID;playerRace;enemyID;enemyRace"
+            do! Async.Sleep(1000)
             let welcomeMessage = m_socketComm.ReadLine()
 
             // Send bot options that StarCraft is waiting for
@@ -197,7 +191,8 @@ type StarCraftConnector(port) =
             do! Async.Sleep(2500)
             let metaData, firstUpdate = 
                 let dataRead = new StringBuilder(10 * 1024)
-                while m_socket.Available <> 0 do
+                Threading.Thread.Sleep(100)
+                while m_socket.Available <> 0 || dataRead.Length = 0 do
                     dataRead.Append(m_socketComm.ReadLine()) |> ignore
                     Threading.Thread.Sleep(100)
                 let data = dataRead.ToString()
@@ -228,10 +223,16 @@ type StarCraftConnector(port) =
                 while m_socket.Available = 0 do
                     do! Async.Sleep(1)
                     
-                let rawPlayerState = m_socketComm.ReadLine()
+                let rawPlayerState = new StringBuilder();
+                //let rawPlayerState = m_socketComm.ReadLine()
+                while m_socket.Available <> 0 do
+                    // rawPlayerState += m_socketComm.ReadLine()
+                    do! Async.Sleep(1)
+                    rawPlayerState.Append(m_socketComm.ReadLine()) |> ignore
                 if m_socket.Available <> 0 then failwith "Didn't read all data?"
                 
-                m_playerStateUpdatedEvent.Trigger(this, PlayerState.Parse(rawPlayerState))
+                let playerState = PlayerState.Parse(rawPlayerState.ToString())
+                m_playerStateUpdatedEvent.Trigger(this, playerState)
 
                 // Get the command queue ready for transmission
                 let commandBuffer = new StringBuilder("Commands")
