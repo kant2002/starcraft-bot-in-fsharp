@@ -474,6 +474,12 @@ int StarCraftConnector::InitSocket()
 	  client_addr.sin_family = AF_INET;
       client_addr.sin_port = htons((u_short) PORTNUM);
       client_addr.sin_addr =  *((struct in_addr*) h->h_addr) ;
+	  Broodwar->sendText("Attempt to connect to host: %s with address %d.%d.%d.%d", 
+		  myname,
+		  client_addr.sin_addr.S_un.S_un_b.s_b1,
+		  client_addr.sin_addr.S_un.S_un_b.s_b2,
+		  client_addr.sin_addr.S_un.S_un_b.s_b3,
+		  client_addr.sin_addr.S_un.S_un_b.s_b4);
       if ((sockfd = socket(AF_INET , SOCK_STREAM , 0)) == -1){
 		  return -1;
       }
