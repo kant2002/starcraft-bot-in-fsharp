@@ -6,6 +6,7 @@ type SCCommandID =
     | RightClickPos  = 3
     | RightClickUnit = 4
     | TrainUnit      = 5
+    | Build          = 6
     | HoldPosition   = 11
 
 type SCCommand =
@@ -18,7 +19,7 @@ type SCCommand =
     /// Hold position. Stop where you are, attack anythying nearby.
     | HoldPosition   of int
     ///Command a free worker to build a new builing
-    ///| Build          of int * Location
+    | Build          of int * Location
 
     /// Generates the command in a format to be transfered to bwapi. THESE MUST BE IN SYNC.
     override this.ToString() =
@@ -33,3 +34,5 @@ type SCCommand =
         | RightClickUnit(u, tgt) -> printCmd1 SCCommandID.RightClickUnit u tgt
         | TrainUnit(u, newUID)   -> printCmd1 SCCommandID.TrainUnit u newUID
         | HoldPosition(u)        -> printCmd0 SCCommandID.HoldPosition u
+        | Build(u, loc)          -> printCmd2 SCCommandID.Build loc.X loc.Y u
+        

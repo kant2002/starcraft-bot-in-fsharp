@@ -6,26 +6,7 @@ open StarCraftBot9K.StarCraft.Communication
 open StarCraftBot9K.AI.AIBase
 // open StarCraftBot9K.AI.AIStructs
 
-let private economyAgent(currentState: PlayerState, mediator: GameMediator) = 
-    // Build workers with all available cash, but without queueing
-    if currentState.SupplyUsed < currentState.SupplyTotal &&
-        currentState.Minerals >= 50 &&
-        currentState.CanProduce.[ int (getWorkerType(g_GameMetadata.PlayerRace)) ] then
-               
-        // BUG: Builds a worker at the first command center we find, this might not be the best one.
-        // Ideally we'd have some higher level notion of a 'base' with a 'status' such as 'active' or 'out of resources'.
-        let cmdCenter = 
-            currentState.Units 
-            |> Seq.filter (fun unit -> unit.Player = g_GameMetadata.PlayerID)
-            |> Seq.tryFind (fun unit -> isCommandCenter (enum<UnitID> unit.TypeID))
-            //|> Seq.tryFind (fun unit -> isBuilding (enum<UnitID> unit.ID))
-                    
-        if Option.isSome cmdCenter then
-            let cmdCenterID, isTraining = cmdCenter |> Option.get |> (fun unit -> unit.ID, unit.isTraining)                    
-            if isTraining = 0 then
-                let cmd = TrainUnit(cmdCenterID, int (getWorkerType(g_GameMetadata.PlayerRace)))
-                mediator.SendCommand(cmd)
-
+let gatheringAgent (currentState: PlayerState, mediator: GameMediator) = 
     // Send idle workers to closest mineral patch
     for scunit in currentState.Units do
         // If you own the unit, it's a worker, and it's sitting there then
@@ -49,6 +30,54 @@ let private economyAgent(currentState: PlayerState, mediator: GameMediator) =
                 let targetMinPatch = mineralPatches |> Seq.head |> snd
                 let cmd = RightClickUnit(scunit.ID, targetMinPatch.ID)
                 mediator.SendCommand(cmd)
+
+let trainSCV (currentState: PlayerState, mediator: GameMediator) = 
+    // Build workers with all available cash, but without queueing
+    if currentState.SupplyUsed < currentState.SupplyTotal &&
+        currentState.Minerals >= 50 &&
+        currentState.CanProduce.[ int (getWorkerType(g_GameMetadata.PlayerRace)) ] then
+               
+        // BUG: Builds a worker at the first command center we find, this might not be the best one.
+        // Ideally we'd have some higher level notion of a 'base' with a 'status' such as 'active' or 'out of resources'.
+        let cmdCenter = 
+            currentState.Units 
+            |> Seq.filter (fun unit -> unit.Player = g_GameMetadata.PlayerID)
+            |> Seq.tryFind (fun unit -> isCommandCenter (enum<UnitID> unit.TypeID))
+            //|> Seq.tryFind (fun unit -> isBuilding (enum<UnitID> unit.ID))
+                    
+        if Option.isSome cmdCenter then
+            let cmdCenterID, isTraining = cmdCenter |> Option.get |> (fun unit -> unit.ID, unit.isTraining)                    
+            if isTraining = 0 then
+                let cmd = TrainUnit(cmdCenterID, int (getWorkerType(g_GameMetadata.PlayerRace)))
+                mediator.SendCommand(cmd) &&
+                currentState.CanProduce.[ int (getWorkerType(g_GameMetadata.PlayerRace)) ] then
+
+let produceOverlord unit =
+    unit
+
+let buildSupplyBuilding builder =
+    unit
+
+let buildSupply (currentState: PlayerState, mediator: GameMediator) =
+    // Build workers with all available cash, but without queueing
+    if currentState.SupplyUsed >= (currentState.SupplyTotal - 2) &&
+        currentState.Minerals >= 100 &&
+        currentState.CanProduce.[ int (getSupplyUnit(g_GameMetadata.PlayerRace)) ] then
+               
+        let builder = 
+            curentState.Units
+            |> Seq.filter (fun unit -> unit.Player = g_GameMetadata.PlayerID)
+            |> Seq.tryFind isSupplyUnitBuilder
+        
+        if Option.isSome builder then
+            match g_GameMetadata.PlayerRace with
+            | Race.Zerg -> produceOverlord builder
+            | _ -> buildSupplyBuilding builder
+
+let private economyAgent(currentState: PlayerState, mediator: GameMediator) = 
+    trainSCV(currentState, mediator)
+    gatheringAgent(currentState, mediator)
+    
 
 /// AI module for managaing your economy. Building drones, vespen geysers, etc.
 let private getAILoop (mediator: GameMediator) agentTick =

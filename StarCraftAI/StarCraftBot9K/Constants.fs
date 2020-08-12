@@ -22,6 +22,7 @@ type UnitID =
 
     // Zerg Unit IDs
     | ZergDrone = 41
+    | ZergOverlord = 42
     
     // Protos Unit IDs
     | ProtosProbe = 64
@@ -29,12 +30,16 @@ type UnitID =
     // ---- Building ----
     // Terran Building IDs
     | TerranCommandCenter = 106
+    | TerranSupplyDepot = 109
 
     // Zerg Building IDs
     | ZergHatchery = 131
+    | ZergLair = 132
+    | ZergHive = 133
 
     // Protos Building IDs
     | ProtosNexus = 154
+    | ProtosPylon = 156
 
     // ---- Misc ----
     // Misc Units

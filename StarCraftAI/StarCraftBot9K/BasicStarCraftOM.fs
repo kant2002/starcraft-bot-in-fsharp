@@ -56,6 +56,22 @@ let getWorkerType raceId =
     | Race.Protos -> UnitID.ProtosProbe
     | _ -> failwithf "Unknown race %A" (enum<Race> raceId)
     
+let isSupplyUnitBuilder bui =
+    match enum<UnitID> bui.TypeID with
+    | UnitID.TerranSCV 
+    | UnitID.ZergHatchery
+    | UnitID.ZergLair
+    | UnitID.ZergHive
+    | UnitID.ProtosProbe -> true
+    | _ -> false
+    
+let getSupplyUnit raceId =
+    match enum<Race> raceId with
+    | Race.Terran -> UnitID.TerranSupplyDepot
+    | Race.Zerg   -> UnitID.ZergOverlord
+    | Race.Protos -> UnitID.ProtosPylon
+    | _ -> failwithf "Unknown race %A" (enum<Race> raceId)
+    
 let isCommandCenter typeID =
     match typeID with
     | UnitID.TerranCommandCenter
